@@ -35,7 +35,7 @@ for i in range(nx):
 temp=0
 
 #########################    L1 grad norm  ############################## 
-while (step<200):
+while (step<0):
 #while ((sumold/sumnew-1)>0.001):
     sum1=0
     sum2=0
@@ -88,7 +88,7 @@ for i in range(nx):
 temp=0
 
 #########################    L1 grad norm  ############################## 
-while (step<200):
+while (step<0):
 #while ((sumold/sumnew-1)>0.001):
     sum1=0
     sum2=0
