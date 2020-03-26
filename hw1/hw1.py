@@ -71,7 +71,7 @@ def op_u():
         for i in range(1,localnx+1 ):
             for j in range(1,ny+1):
                 for k in range(1,nz+1):
-                    u[i][j][k] =( Y[i][j][k] - alpha*(u[i][j][k+1]+u[i][j][k-1]+u[i][j+1][k]+u[i][j-1][k]+u[i-1][j][k]+u[i+1][j][k]))/(1+6*alpha)
+                    u[i][j][k] =( Y[i][j][k] + alpha/4.0*(u[i][j][k+1]+u[i][j][k-1]+u[i][j+1][k]+u[i][j-1][k]+u[i-1][j][k]+u[i+1][j][k]))/(1+6.0/4.0*alpha)
 
         #MPI part
         for_send_buf =np.copy(u[localnx+1,:,:])
@@ -183,7 +183,7 @@ def op_mu():# NO NEED for grad_u
 
 
 count = 0
-while count< 1:#TODO set the right condition
+while count< 3:#TODO set the right condition
     op_u()
     print("finish op of u, in rank",rank)
     cal_grad_u()
