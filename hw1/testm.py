@@ -7,9 +7,9 @@ from mpi4py import MPI
 
 #init u,m,mu (local)
 alpha = 4
-u = np.ones((3,3))
-v = 1.0/alpha *u
-print (v)
+u = np.ones((5,5,5))
+v = u[1:3,3,1:3]
+print (np.shape(v))
 #print the result
 
 
