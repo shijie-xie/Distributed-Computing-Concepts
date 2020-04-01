@@ -8,8 +8,8 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 #set the constant
-lamda = 100.0
-alpha = 1000.0
+lamda = 10.0
+alpha = 10000.0
 #TODO change the parameter
 
 # optimization of u
@@ -65,7 +65,7 @@ def op_u():
   
     # solve ( 1 - \alpha \Delta) u = Y
     # central diff
-    for t in range(0,30):#TODO 100 is a parameter here to op
+    for t in range(0,50):#TODO 100 is a parameter here to op
         # solve (1 + 1.5 * \alpha ) u = Y + 0.25*\alpha ( \sum u^{\pm 1})
         u[1:localnx,1:ny,1:nz] =1.0/(1+1.5*alpha)*( Y[1:localnx,1:ny,1:nz]+ 0.25*alpha*(u[0:localnx-1,1:ny,1:nz]+u[2:localnx+1,1:ny,1:nz]+u[1:localnx,0:ny-1,1:nz]+u[1:localnx,2:ny+1,1:nz]+u[1:localnx,1:ny,0:nz-1]+u[1:localnx,1:ny,2:nz+1]))
         #MPI part
@@ -118,9 +118,9 @@ def op_u():
 
 def cal_grad_u():
     global u,grad_u
-    grad_u[0,1:localnx,1:ny,1:nz] = u[1:localnx,1:ny,1:nz] - u[0:localnx-1,1:ny,1:nz]
-    grad_u[1,1:localnx,1:ny,1:nz] = u[1:localnx,1:ny,1:nz] - u[1:localnx,0:ny-1,1:nz]
-    grad_u[2,1:localnx,1:ny,1:nz] = u[1:localnx,1:ny,1:nz] - u[1:localnx,1:ny,0:nz-1]
+    grad_u[0,1:localnx,1:ny,1:nz] =( u[1:localnx,1:ny,1:nz] - u[0:localnx-1,1:ny,1:nz])
+    grad_u[1,1:localnx,1:ny,1:nz] =( u[1:localnx,1:ny,1:nz] - u[1:localnx,0:ny-1,1:nz])
+    grad_u[2,1:localnx,1:ny,1:nz] =( u[1:localnx,1:ny,1:nz] - u[1:localnx,1:ny,0:nz-1])
 #NOTE the following ones is quite slow
 #    for i in range(1,localnx+1):
 #        for j in range(1,ny+1):
@@ -148,7 +148,7 @@ if rank == 0:
     nmean, nsigma = 0.0, 12.0
     nimg = np.random.normal(nmean,nsigma,(nx,ny,nz)) + img
     plt.figure()
-    plt.subplot(1,4,1)
+    plt.subplot(4,4,1)
     plt.imshow(nimg[80,:,:], cmap=plt.cm.gray)
 
 
@@ -186,17 +186,21 @@ def op_mu():# NO NEED for grad_u
 count = 0
 while count<3:#TODO set the right condition
     op_u()
-    #print("finish op of u, in rank",rank)
     cal_grad_u()
-    #print("finish calculate grad u, in rank",rank)
     op_m()
-    #print("finish op of m , in rank",rank)
     op_mu()
-    #print("finish op of \mu, in rank",rank)
+
     count = count+1
     if rank == 0:
-        plt.subplot(1,4,count+1)
+        plt.subplot(4,4,count+1)
         plt.imshow(u[80,:,:], cmap=plt.cm.gray)
+        plt.subplot(4,4,count+1+4)
+        plt.imshow(grad_u[1,80,:,:], cmap=plt.cm.gray)
+        plt.subplot(4,4,count+1+8)
+        plt.imshow(m[1,80,:,:], cmap=plt.cm.gray)
+        plt.subplot(4,4,count+1+12)
+        plt.imshow(mu[1,80,:,:], cmap=plt.cm.gray)
+
         print("    end of ietration " ,count)
 
 if rank ==0:
