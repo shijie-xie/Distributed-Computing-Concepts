@@ -9,7 +9,7 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 #set the constant
 lamda = 100.0
-alpha = 100.0
+alpha = 1000.0
 #TODO change the parameter
 
 # optimization of u
@@ -65,7 +65,7 @@ def op_u():
   
     # solve ( 1 - \alpha \Delta) u = Y
     # central diff
-    for t in range(0,20):#TODO 100 is a parameter here to op
+    for t in range(0,30):#TODO 100 is a parameter here to op
         # solve (1 + 1.5 * \alpha ) u = Y + 0.25*\alpha ( \sum u^{\pm 1})
         u[1:localnx,1:ny,1:nz] =1.0/(1+1.5*alpha)*( Y[1:localnx,1:ny,1:nz]+ 0.25*alpha*(u[0:localnx-1,1:ny,1:nz]+u[2:localnx+1,1:ny,1:nz]+u[1:localnx,0:ny-1,1:nz]+u[1:localnx,2:ny+1,1:nz]+u[1:localnx,1:ny,0:nz-1]+u[1:localnx,1:ny,2:nz+1]))
         #MPI part
@@ -194,9 +194,10 @@ while count<3:#TODO set the right condition
     op_mu()
     #print("finish op of \mu, in rank",rank)
     count = count+1
-    plt.subplot(1,4,count+1)
-    plt.imshow(u[80,:,:], cmap=plt.cm.gray)
-    print("    end of ietration " ,count)
+    if rank == 0:
+        plt.subplot(1,4,count+1)
+        plt.imshow(u[80,:,:], cmap=plt.cm.gray)
+        print("    end of ietration " ,count)
 
 if rank ==0:
     #plt.figure()
