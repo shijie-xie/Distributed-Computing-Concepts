@@ -5,15 +5,11 @@ from mpi4py import MPI
 
 
 
-#init u,m,mu (local)
-alpha = 4
-u = np.ones((5,5))
-u[1,1]=5
-u[2,2]=7
-v = u[1:3,1:3]
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
 
-print(v)
-print (np.shape(v))
+print("  112 ")
 #print the result
 
 

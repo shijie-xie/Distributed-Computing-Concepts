@@ -31,6 +31,9 @@ def op_u():
     #print(for_send_buf.shape)
     for_recv =np.empty([ny+2,nz+2], dtype=np.float64)
     bac_recv =np.empty([ny+2,nz+2], dtype=np.float64)
+    
+
+    # only n to n+1 is in need
     if rank==0 :
         for_send_req =comm.Isend(for_send_buf, dest = rank+1, tag = rank+350)
         for_send_req.Wait()
@@ -44,6 +47,8 @@ def op_u():
         bac_send_req =comm.Isend(bac_send_buf, dest = rank-1, tag = rank+450)
         bac_send_req.Wait()
         X[0,0,:,:] = for_recv
+
+
     else :
         #pass in both direction
         for_send_req =comm.Isend(for_send_buf,dest = rank+1, tag = rank+350)
@@ -68,6 +73,10 @@ def op_u():
     Y[1:localnx+1 , 1:ny+1 ,1:nz+1] = localimg -( X[0,2:localnx+2,1:ny+1,1:nz+1] - X[0,0:localnx,1:ny+1,1:nz+1])/2 -( X[1,1:localnx+1,2:ny+2,1:nz+1] - X[1,1:localnx+1,0:ny,1:nz+1])/2  -( X[2,1:localnx+1,1:ny+1,2:nz+2] - X[2,1:localnx+1,1:ny+1,0:nz])/2             
     #print(np.shape(Y[1:localnx+1 , 1:ny+1 ,1:nz+1]))
     #print("in iteration ",count,"rank",rank, "finish assemble the matrix" )
+
+
+
+  
     # solve ( 1 - \alpha \Delta) u = Y
     # central diff
     for t in range(0,15):#TODO 15 is a parameter here to op
@@ -100,6 +109,8 @@ def op_u():
             #recv 
             bac_send_req.Wait()
             u[0,:,:] = for_recv
+
+
         else :
             #pass in both direction
             for_send_req =comm.Isend(for_send_buf,dest = rank+1, tag = rank+350)
@@ -115,6 +126,8 @@ def op_u():
             u[localnx+1,:,:] = bac_recv
             u[0,:,:] = for_recv
         #print("finish MPI in u op",count, " ",t,rank)
+
+
     return
 
 def cal_grad_u():
@@ -151,8 +164,7 @@ if rank == 0:
     nmean, nsigma = 0.0, 12.0
     nimg = np.random.normal(nmean,nsigma,(nx,ny,nz)) + img
     #print("shape of nimg",np.shape(nimg))
-
- 
+    
 # init local img
 localnx = nx//size
 #print(localnx)
@@ -160,15 +172,13 @@ localnx = nx//size
 localimg =  np.empty([localnx,ny,nz], dtype=np.float64)
 comm.Scatter(nimg   , localimg, root=0)
 #print("shape of local nimg in rank ",rank, np.shape(localimg))
-if rank == 0:
-    plt.figure()
-    plt.subplot(2,4,1)
-    plt.imshow(localimg[localnx-1,:,:], cmap=plt.cm.gray)
-    plt.title("Noisy image")
-
 #init u,m,mu (local)
 #store data in 1:localnx, 1:ny,1:nz. 
 #store MPI data in 0,1:ny,1:nz and localnx+1,1:ny,1:nz
+if rank== 0 :
+    del nimg
+    del img
+    
 u = 100.0* np.ones((localnx+2,ny+2,nz+2)) # rank(zero) = empty
 m = 100.0* np.ones((3,localnx+2,ny+2,nz+2)) # first indice 0,1,2 means dx ,dy ,dz
 mu= 100.0* np.zeros((3,localnx+2,ny+2,nz+2))
@@ -212,51 +222,11 @@ while count<3:#TODO stability
 #        plt.imshow(mu[1,80,:,:], cmap=plt.cm.gray)
 
 #        print("    end of ietration " ,count)
-sendbuf = np.copy(u[1:localnx+1,1:ny+1,1:nz+1])
-recvbuf = None
-if rank == 0:
-    recvbuf = np.empty([nx,ny,nz], dtype=np.float64)
-comm.Gather(sendbuf, recvbuf, root=0)
+
 if rank ==0:
-    print(np.shape(recvbuf[1,:,:]    ))
-    #u = recvbuf
     #plt.figure()
     end = time.time()
     print("Execution Time: ", end - start)
-    plt.subplot(2,4,2)
-    plt.imshow(recvbuf[99,:,:], cmap=plt.cm.gray)
-    plt.title("x=99,\n last slice \n of rank 0")
-
-    plt.subplot(2,4,3)
-    plt.imshow(recvbuf[100,:,:], cmap=plt.cm.gray)
-    plt.title("x=100,\n first slice \n of rank 1")
-
-
-    plt.subplot(2,4,4)
-    plt.imshow(recvbuf[:,99,:], cmap=plt.cm.gray)
-    plt.title("y=99")
-
-    plt.subplot(2,4,5)
-    plt.imshow(recvbuf[:,80,:], cmap=plt.cm.gray)
-    plt.title("y=80")
-
-
-    plt.subplot(2,4,6)
-    plt.imshow(recvbuf[:,:,99], cmap=plt.cm.gray)
-    plt.title("z=99")
-    
-    plt.subplot(2,4,7)
-    plt.imshow(recvbuf[:,:,80], cmap=plt.cm.gray)
-    plt.title("z=80")
-
-    plt.subplot(2,4,8)
-    plt.imshow(recvbuf[:,:,145], cmap=plt.cm.gray)
-    plt.title("z=145")
-
-
-    plt.show()
-
-
 #print the result
 
 
